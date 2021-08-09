@@ -61,7 +61,7 @@ Tikhonov_Selection = function(X, Y, RhoSeq, nFold = 10, Select_Method = "CV",cvM
 }
   
 
-Tikhonov_Selection_Comp = function(X, Y, RhoSeq, nFold = 10, Select_Method = "CV", cvMemvership = NULL, beta_true = NULL) {
+Tikhonov_Selection_Comp = function(X, Y, RhoSeq, nFold = 10, Select_Method = "CV", cvMembership = NULL, beta_true = NULL) {
   X_c = t(X) - colMeans(X)
   X_c = t(X_c)
   C = t(X_c)%*%X_c/nrow(X)
@@ -70,7 +70,7 @@ Tikhonov_Selection_Comp = function(X, Y, RhoSeq, nFold = 10, Select_Method = "CV
   g = t(X_c)%*%Y_c/nrow(X)
   nSample = nrow(X)
   
-  ErrorMat = matrix(0, ncol(Y), length(RhoSeq))
+  ErrorMat = matrix(1e10, ncol(Y), length(RhoSeq))
   opt_lambda = rep(0, ncol(Y))
   btildeMat = matrix(0, ncol(X), ncol(Y))
   alphaMat = matrix(0, ncol(Y), 1)
@@ -81,7 +81,7 @@ Tikhonov_Selection_Comp = function(X, Y, RhoSeq, nFold = 10, Select_Method = "CV
     for (i in 1:ncol(Y)){
       YVec = Y[ , i, drop = F]
       for (j in 1:length(RhoSeq)){
-        testerror = rep(1e7, nfold)
+        testerror = rep(1e7, nFold)
         rho = RhoSeq[j]
         for (cf in 1:nFold){
           testIndex = (cvMembership == cf) 
@@ -100,8 +100,8 @@ Tikhonov_Selection_Comp = function(X, Y, RhoSeq, nFold = 10, Select_Method = "CV
       index = which.min(ErrorMat[i, ])
       opt_lambda[i] = RhoSeq[index]
       Estimate = Tikhonov_Estimate(X, YVec, opt_lambda[i])
-      btildeMat[ ,i] = Estimate$btilde
-      alphaMat[i, ] = Estimate$alphatilde
+      btildeMat[ ,i] = Estimate$beta
+      alphaMat[i, ] = Estimate$alpha
     }
   } else if (Select_Method == "GCV") {
     

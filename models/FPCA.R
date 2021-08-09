@@ -139,12 +139,12 @@ FPCA_Selection_Comp = function(X, Y, pSeq, Select_Method = "CV", nFold = 10, cvM
           Xtest = X[testIndex, ]
           Ytest = YVec[testIndex, , drop = F]
           Xtrain = X[!testIndex, ]
-          Ytest = YVec[!testIndex, , drop = F]
+          Ytrain = YVec[!testIndex, , drop = F]
           fit_train = FPCA_Estimate_Comp(Xtrain, Ytrain, p)
           betaTrain = fit_train$beta
           alphaTrain = fit_train$alpha
           Ytesthat = as.numeric(alphaTrain) + Xtest%*%betaTrain/ncol(Xtest)
-          testerror[cf] = (Ytest - Ytesthat)^2/nrow(Ytest)
+          testerror[cf] = sum((Ytest - Ytesthat)^2)/nrow(Ytest)
         }
         ErrorMat[i, j] = mean(testerror)
       }

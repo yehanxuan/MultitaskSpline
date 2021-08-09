@@ -3,6 +3,8 @@ Mont = 1000
 M = 5
 
 nFold = 10
+Select_Method = "CV"
+
 
 ## Spline 
 simu_tmin = 0
@@ -12,13 +14,15 @@ simu_order = 4
 ## Tunning parameter
 rankSeq = rev(2:5)
 
+
 if (method == "RKHS"){
     lambdaSeq  = exp(seq(-13,0, length.out = 10)) 
 } else if (method == "Tikhonov"){
     lambdaSeq = exp(seq(-2,3.5, length.out = 10)) 
 } else if (method == "FPCA"){
-    lambdaSeq = exp(seq(log(0.001), log(0.5), length.out = 10))
-} else if (method == "Reduce"){
+    #lambdaSeq = exp(seq(log(0.001), log(0.5), length.out = 10))
+    lambdaSeq = seq(1, 10, by = 1)
+} else if (method == "PSpline"){
     if (simu_knots <= 7){
         lambdaSeq = exp(seq(-10,0, length.out = 7))  # K <= 7
     } else if ( (simu_knots > 7) && (simu_knots <= 10) ){

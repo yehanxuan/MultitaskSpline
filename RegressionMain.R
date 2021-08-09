@@ -12,6 +12,14 @@ simu_knots = as.numeric(args[5])
 DataType = args[6]
 sigma_e = as.numeric(args[7])
 
+settingsID = 1  # Default setting is 1
+simu_n = 128
+method = "RKHS"
+repID = 2
+simu_knots = 20
+DataType = "Reg"
+sigma_e = 0.5
+
 source("./loadAll.R")
 Rcpp::sourceCpp("models/gaussianOj.cpp")
 source("./models/RKHS.R")

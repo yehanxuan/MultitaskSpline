@@ -32,7 +32,7 @@ RKHS_Estimate = function(X, Y, lambda, beta_true = NULL, CovMat = NULL) {
   MatT = X_c%*%Xi/Mont
   K = ComputeKernel(Mont)
   Sigma = X_c%*%K%*%t(X_c)/(Mont^2)
-  W = Sigma + lambda*diag(nsample)    #Multiple a term nsample as in paper! No multiple, consider the parameter is too small
+  W = Sigma + lambda*diag(nSample)    #Multiple a term nsample as in paper! No multiple, consider the parameter is too small
   
   invW = solve(W)
   invMid = solve(t(MatT)%*%invW%*%MatT)
@@ -43,7 +43,7 @@ RKHS_Estimate = function(X, Y, lambda, beta_true = NULL, CovMat = NULL) {
   Mat_tmp = (Xi%*%d1 + (K%*%t(X_c)/Mont)%*%c1) # Modify X_c
   betahat = Mat_tmp%*%Y
   hatMat = X_c%*%Mat_tmp/Mont        ## Modify the X to X_c
-  hatMat = hatMat + matrix(1/nsample, nsample, nsample)
+  hatMat = hatMat + matrix(1/nSample, nSample, nSample)
   alphahat = Y_mean - t(X_mean)%*%betahat/Mont
   
   if (!is.null(beta_true)) {
@@ -52,7 +52,7 @@ RKHS_Estimate = function(X, Y, lambda, beta_true = NULL, CovMat = NULL) {
   } else {
     Est_error = NULL
     Pred_error = NULL
-    cat("True beta required!")
+    #cat("True beta required!")
   }
   # Compute the GCV of lambda
   gcv = GCV(hatMat, Y)
@@ -77,8 +77,8 @@ RKHS_Selection = function(X, Y, lambdaSeq, Select_Method = "CV", nFold = 10, cvM
         Xtrain = X[!testIndex, ]
         Ytrain = Y[!testIndex, , drop = F]
         fit_train = RKHS_Estimate(Xtrain, Ytrain, lambda)
-        betaTrain = fit_train$betahat 
-        alphaTrain = fit_train$alphahat
+        betaTrain = fit_train$beta
+        alphaTrain = fit_train$alpha
         YtestHat = as.numeric(alphaTrain) + Xtest%*%betaTrain/ncol(Xtest)
         testerror[cf] =  sum( (YtestHat - Ytest)^2)/nrow(Ytest)
       }

@@ -1,5 +1,6 @@
 
 if (DataType == "Reg"){
+    K.set = seq(5, 20, by = 2)
     nu = 2
     simuData = Generate_MultiData(Mont, simu_n, M ,sigma_e, nu)
     Ymat = simuData$Y

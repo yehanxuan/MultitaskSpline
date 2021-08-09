@@ -23,6 +23,7 @@ ReduceRankSpline = function(X, Y, mOrder, nKnots, rank, lambda, beta_true = NULL
   Cov = t(Zmat_c)%*%Zmat_c/nrow(Zmat_c)
   gcv = NULL
   
+  
   if (is.null(InitList)){
     UInit = matrix(rnorm(rank*M), M, rank)
     UInit = qr.Q(qr(UInit))
@@ -40,24 +41,26 @@ ReduceRankSpline = function(X, Y, mOrder, nKnots, rank, lambda, beta_true = NULL
   }
   
   Ydiff = Y_c - Zmat_c %*% DInit %*% t(AInit)
-  obj = norm(Ydiff, "F")^2/nrow(Y) + lambda*sum( diag(t(D)%*%Omega%*%D) ) # Add square here 
+  obj = norm(Ydiff, "F")^2/nrow(Y) + lambda*sum( diag(t(DInit)%*%Omega%*%DInit) ) # Add square here 
   tol = 1
+  iter = 0
   while (tol > 1e-5) {
     SVD = svd(t(Cor)%*%DInit)
     U = SVD$u
     V = SVD$v
     A = U%*%t(V)
-    D = solve(Cov + lambda*Omega, Cor%*%A/nrow(Z_mat_c))
+    D = solve(Cov + lambda*Omega, Cor%*%A/nrow(Zmat_c))
     Ydiff = Y_c - Zmat_c %*% D %*% t(A)
     tmp = norm(Ydiff, "F")^2/nrow(Y) + lambda*sum( diag(t(D)%*%Omega%*%D) )
     obj = cbind(obj, tmp)
     
     tol = norm(D - DInit, "F")
     DInit = D
+    iter = iter + 1
   }
   SFinal = list(A, D)
   CHat = D%*%t(A)
-  alphaHat = Y_mean - t(CHat)%*%Z_mean
+  alphaHat = Ymean - t(CHat)%*%Zmean
   betaHat =  t(basisMat) %*% CHat
   
   if (!is.null(beta_true)){
@@ -91,9 +94,9 @@ Spline_Selection = function(X, Y, mOrder, nKnots, lambdaSeq, rankSeq, nFold = 10
         Ytest = Y[testIndex, , drop = F]
         Xtrain = X[!testIndex, ]
         Ytrain = Y[!testIndex, , drop = F]
-        fit_train = ReduceRankSpline(Xtrain, Ytrain, mOrder, nKnots, rankSeq[i], lambda[j])
-        betaTrain = fit_train$betahat 
-        alphaTrain = fit_train$alphahat
+        fit_train = ReduceRankSpline(Xtrain, Ytrain, mOrder, nKnots, rankSeq[i], lambdaSeq[j])
+        betaTrain = fit_train$beta
+        alphaTrain = fit_train$alpha
         YtestHat = Xtest %*% betaTrain/ncol(Xtest) + rep(1, nrow(Xtest))%*%t(alphaTrain)
         testerror[cf] = sum((YtestHat - Ytest)^2)/nrow(Ytest)
       }
@@ -165,7 +168,7 @@ Multi_Regression = function(Xmat, Ymat, rankSeq, lambdaSeq, method, nFold = 10, 
     lambda = rep(0, ncol(Ymat))
     for (i in 1:ncol(Ymat)) {
       fit = RKHS_Selection(Xmat, Ymat[, i, drop = F], lambdaSeq, Select_Method,
-                           nFold, beta_true = beta_true, CovMat = CovMat)
+                           nFold, beta_true = beta_true[ ,i, drop = F], CovMat = CovMat)
       EstError[i] = fit$Est_error
       PredError[i] = fit$Pred_error
       lambda[i] = fit$lambda
@@ -195,7 +198,7 @@ Multi_Regression = function(Xmat, Ymat, rankSeq, lambdaSeq, method, nFold = 10, 
     Select = Spline_Selection(Xmat, Ymat, simu_order, simu_knots, 
                               lambdaSeq, rankSeq, nFold, beta_true = beta_true)
     fit = ReduceRankSpline(Xmat, Ymat, simu_order, simu_knots, Select$opt_rank, Select$opt_lambda,
-                           beta_true = beta_true)
+                           beta_true = beta_true, CovMat = CovMat)
     MSE = fit$EstError
     PredE = diag( PredErr_true(CovMat, fit$beta, beta_true))
     lambda = Select$opt_lambda 
@@ -206,8 +209,8 @@ Multi_Regression = function(Xmat, Ymat, rankSeq, lambdaSeq, method, nFold = 10, 
     opt_K = Select$opt_lambda # optimal K 
     lambda = opt_K
     rank = Select$opt_rank
-    fit = ReduceRankSpline(Xmat, Ymat, simu_order, rank, lambda = 0, 
-                           beta_true = beta_true)
+    fit = ReduceRankSpline(Xmat, Ymat, simu_order, opt_K, rank, lambda = 0, 
+                           beta_true = beta_true, CovMat = CovMat)
     betaHat = fit$beta
     MSE = colSums((betaHat - beta_true)^2)/ncol(Xmat)
     PredE = diag( PredErr_true(CovMat, fit$beta, beta_true))
@@ -228,12 +231,12 @@ oneReplicateWrap_Reg = function(seedJ){
 oneReplicate_Reg = function(seedJ){
   set.seed(seedJ + repID * 300)
   source("./OneRep/oneRep-Reg.R")
-  if (is.null(K.set)){
-    fit = Multi_Regression(Xmat, Ymat, rankSeq, lambdaSeq, method, nFold, Select_Method,
-                           beta_true = beta_true, CovMat, simu_knots, simu_order)
-  } else {
+  if (!is.null(K.set)){
     fit = Multi_Regression(Xmat, Ymat, rankSeq, lambdaSeq, method, nFold, Select_Method,
                            beta_true = beta_true, CovMat, simu_knots, simu_order, K.set)
+  } else {
+    fit = Multi_Regression(Xmat, Ymat, rankSeq, lambdaSeq, method, nFold, Select_Method,
+                           beta_true = beta_true, CovMat, simu_knots, simu_order)
   }
   
   MSE = fit$MSE
