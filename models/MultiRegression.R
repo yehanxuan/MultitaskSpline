@@ -8,7 +8,7 @@ ReduceRankSpline = function(X, Y, mOrder, nKnots, rank, lambda, beta_true = NULL
   
   Zmean = t( colMeans(X) %*% t(basisMat)/Mont)
   Zmat_c  = t(t(X) - colMeans(X)) %*% t(basisMat)/Mont
-  Zmat = Xmat %*% t(basisMat)/Mont
+  Zmat = X %*% t(basisMat)/Mont
   Ymean = colMeans(Y)
   Y_c = t(t(Y) - Ymean)
   ## Use optimization algorithm

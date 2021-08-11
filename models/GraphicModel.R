@@ -1,4 +1,5 @@
 # Compute Graph Laplacian 
+library(matrixcalc)
 Graph_Laplacian = function(S, h){
   size = nrow(S)
   K = matrix(0, size, size)
@@ -39,7 +40,7 @@ Graph_Spline = function(X, Y, S, mOrder, nKnots, lambda, eta, h, beta_true = NUL
   
   # Laplacian 
   Gamma = Graph_Laplacian(S, h)
-  Cov = t(Zmat_c)%*%Ymat_c
+  Cov = t(Zmat_c)%*%Y_c
   Cor = t(Zmat_c)%*%Zmat_c
   
   vecCov = vec(Cov)
@@ -88,7 +89,7 @@ CV_Graph_Spline = function(X, Y, S, mOrder, nKnots, lambdaSeq, etaSeq, hSeq, nFo
           Ytrain = Y[!testIndex, , drop = F]
           fit_train = Graph_Spline(Xtrain, Ytrain, S, mOrder, nKnots, lambdaSeq[i],
                                    etaSeq[j], hSeq[k])
-          YtestHat = Xtest%*%fit$beta/ncol(Xtest) + rep(1, nrow(Xtest)) %*% t(fit_train$alpha)
+          YtestHat = Xtest%*%fit_train$beta/ncol(Xtest) + rep(1, nrow(Xtest)) %*% t(fit_train$alpha)
           testerror[cf] = sum( (Ytest - YtestHat)^2 )/nrow(Ytest)
         }
         ErrorArray[i, j, k] = mean(testerror)
@@ -230,7 +231,7 @@ Graph_Spline_Wrap = function(X, Y, S, mOrder, nKnots, lambdaSeq, etaSeq, hSeq, n
   fit = Graph_Spline(X, Y, S, mOrder, nKnots, lambda, eta, h, beta_true = beta_true, CovMat = CovMat)
   MSE = fit$EstError
   PredE = diag( PredErr_true(CovMat, fit$beta, beta_true))
-  return(list("beta"= solution$beta, "MSE" = MSE, "PredE" = PredE, "optlambda" = lambda, "opteta" = eta, "opth" = h))
+  return(list("beta"= fit$beta, "MSE" = MSE, "PredE" = PredE, "optlambda" = lambda, "opteta" = eta, "opth" = h))
 }
 
 
@@ -269,7 +270,7 @@ oneReplicate_Graph = function(seedJ){
     eta = NULL
     h = NULL
   } else if (method == "PSpline") {
-    fit = Graph_Spline_Wrap(Xmat, Ymat, S, mOrder, nKnots, lambdaSeq, etaSeq, hSeq,
+    fit = Graph_Spline_Wrap(Xmat, Ymat, S, simu_order, simu_knots, lambdaSeq, etaSeq, hSeq,
                       nFold, beta_true = beta_true, CovMat = CovMat)
     MSE = fit$MSE
     PredE = fit$PredE

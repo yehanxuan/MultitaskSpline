@@ -83,6 +83,7 @@ FPCA_Selection = function(X, Y, tSeq, Kfold, Select_Method = "CV", cvMembership 
 # FPCA method. Picking the number of components. It is the same with using threshold essentially
 # Single task FPCA
 FPCA_Estimate_Comp = function(X, YVec, p){
+  # Single Y 
   X_c = t(X) - colMeans(X)
   X_c = t(X_c)
   C = t(X_c)%*%X_c/nrow(X)
@@ -97,10 +98,35 @@ FPCA_Estimate_Comp = function(X, YVec, p){
   Z_trun = Z_c[, 1:p, drop = F]
   b_est =  solve(t(Z_trun)%*%Z_trun, t(Z_trun)%*%YVec_c)
   alpha = mean(YVec) - colMeans(Z_trun)%*%b_est
-  eta = as.numeric(alpha) + Z_trun%*%b_est 
+  eta =  mean(YVec)  + Z_trun%*%b_est 
   beta = Phi[, 1:p]%*%b_est
   return(list("beta" = beta, "alpha" = alpha))
 }
+
+FPCA_Estimate_Multitask = function(X, Y, pSelect){
+  Mont = ncol(X)
+  X_c = t(X) - colMeans(X)
+  X_c = t(X_c)
+  C = t(X_c)%*%X_c/nrow(X)
+  decomp = eigen(C)
+  Phi = decomp$vectors
+  Phi = sqrt(nrow(Phi)) * Phi
+  eigenvalues = (decomp$values)/nrow(Phi)
+  Z_c = (X_c %*% Phi)/nrow(Phi)
+  M = ncol(Y)
+  betaMat = matrix(0, Mont, ncol(Y))
+  alphaMat = matrix(0, ncol(Y), 1)
+  for (i in 1:M){
+    YVec = Y[, i, drop = F]
+    YVec_c = t(YVec) - colMeans(YVec)
+    YVec_c = t(YVec_c)
+    Z_trun = Z_c[, 1:pSelect[i], drop = F]
+    betaMat[, i] =  solve(t(Z_trun)%*%Z_trun, t(Z_trun)%*%YVec_c)
+    alphaMat[i, ] = mean(YVec) - colMeans(Z_trun)%*%betaMat[, i]
+  }
+  return(list("beta" = betaMat, "alpha" = alphaMat))
+}
+
 
 FPCA_Selection_Comp = function(X, Y, pSeq, Select_Method = "CV", nFold = 10, cvMembership = NULL){
   Y = as.matrix(Y)
@@ -167,7 +193,8 @@ FPCA_Selection_Comp = function(X, Y, pSeq, Select_Method = "CV", nFold = 10, cvM
         Z_trun = Z_c[ , 1:p, drop = F]
         b_est = solve(t(Z_trun)%*%Z_trun, t(Z_trun)%*%YVec_c)
         alpha = mean(YVec) - colMeans(Z_trun)%*%b_est
-        eta = as.numeric(alpha) + Z_trun%*%b_est
+       # eta = as.numeric(alpha) + Z_trun%*%b_est
+        eta = mean(YVec) + Z_trun%*%b_est
         AIC = sum(-YVec*eta + eta^2/2) + 2*p
         AICVec = c(AICVec, AIC)
         bmatAIC[[j]] = b_est
@@ -182,6 +209,20 @@ FPCA_Selection_Comp = function(X, Y, pSeq, Select_Method = "CV", nFold = 10, cvM
   return(list("beta" = betaMat, "alpha" = alphaMat, "pSelect" = pSelect))
 }
 
+
+FPCA_Estimate_MultiCov = function(X_approx, Y, pSelect){
+  Mont = ncol(X_approx[[1]])
+  betaMat = matrix(0, Mont, ncol(Y))
+  alphaMat = matrix(0, ncol(Y), 1)
+  for (i in 1:ncol(Y)) {
+    YVec = Y[, i, drop = F]
+    Xmat = X_approx[[i]] 
+    fit = FPCA_Estimate_Comp(Xmat, YVec, pSelect[i])
+    betaMat[, i] = fit$beta
+    alphaMat[i, ] = fit$alpha
+  }
+  return(list("alpha" = alphaMat, "beta" = betaMat))
+}
 
 FPCA_MultiCov = function(X_approx, Y, pSeq, Select_Method = "CV", nFold = 10, cvMembership = NULL) {
   # X_approx should be a list. Y can be matrix

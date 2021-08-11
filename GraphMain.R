@@ -9,11 +9,11 @@ repID = as.numeric(args[4])
 simu_knots = as.numeric(args[5])
 sigma_e = as.numeric(args[6])
 
-method = "RKHS"
+method = "PSpline"
 settingsID = 3
 simu_n = 100
 repID = 2
-simu_knots = 20
+simu_knots = 15
 sigma_e = 0.5
 
 source("./Dataset/Generate_data.R")
@@ -25,6 +25,7 @@ source("models/RKHS.R")
 source("models/FPCA.R")
 source("models/Tikhonov.R")
 source("models/MultiRegression.R")
+source("./models/GraphicModel.R")
 
 source(paste0("./simuSetting/simuSetting-", settingsID, ".R"))
 source(paste0("./OneRep/oneRep-Graph.R"))

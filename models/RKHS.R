@@ -66,7 +66,7 @@ RKHS_Selection = function(X, Y, lambdaSeq, Select_Method = "CV", nFold = 10, cvM
     if (is.null(cvMembership)){
       cvMembership =  getCVPartition(nSample, nFold)
     }
-    ErrorVec = rep(1e+10, length(lambdaSeq))
+    ErrorVec = rep(1e+12, length(lambdaSeq))
     for (i in 1:length(lambdaSeq)) {
       testerror = rep(1e7, nFold) 
       lambda = lambdaSeq[i]
@@ -172,7 +172,7 @@ RKHS_Selection_MultiCov = function(X_approx, Y, lambdaSeq, Select_Method = "CV",
   for (i in 1:ncol(Y)){
     Xmat = X_approx[[i]]
     YVec = Y[, i, drop = F]
-    select = RKHS_Selection(Xmat, YVec, Select_Method, nFold, cvMembership)
+    select = RKHS_Selection(Xmat, YVec, lambdaSeq, Select_Method, nFold, cvMembership)
     opt_lambda[i] = select$lambda
     betaHatMat[, i] = select$beta
     alphaMat[i, ] = select$alpha

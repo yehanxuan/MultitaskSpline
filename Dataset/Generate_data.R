@@ -50,12 +50,26 @@ Generate_MultiData = function(Mont, nsample, M, sigma_e, nu){
 }
 
 # Generate data represented by spline basis 
-Generate_MultiData_Spline = function(Mont, nSample, M, r = 3, sigma_e, nu) {
+Generate_MultiData_Spline = function(Mont, nsample, nknots, M, r = 3, sigma_e, nu) {
   tSeq = seq(0, 1, length.out = Mont) 
   deltaT = 1/Mont
+  tmin = 0
+  tmax = 1
+  
+  splineBasis = new(orthoSpline, tmin, tmax, 4, nknots)
+  basisMat = splineBasis$evalSpline(grid)
+  
+  #PSI = t(basisMat)
+  degree = dim(basisMat)[1]
+  
+  Q = matrix(rnorm(degree*r), degree, r)
+  Q = qr.Q(qr(Q))
+  eigen_beta = 5*diag(seq(1, 3)^-1.5)
+  PSI = t(basisMat)%*%Q
   
   A = matrix(rnorm(r*M), M, r)
   A = qr.Q(qr(A))
+  beta_true = PSI %*% eigen_beta %*% t(A)
   
   k = 50
   Phi = matrix(1, Mont, k)
@@ -66,6 +80,9 @@ Generate_MultiData_Spline = function(Mont, nSample, M, r = 3, sigma_e, nu) {
   eigen_x =diag( (-1)^(weight+1)*(weight^(-nu/2)) )
   Score_mat = matrix(rnorm(k*nsample), k, nsample)
   X_mat = t(Phi%*%eigen_x%*%Score_mat)
+  Y_mat = X_mat %*% beta_true  * deltaT + matrix(rnorm(nsample*M, sd = sigma_e) , nsample,M)
+  C = Phi%*%eigen_x%*%eigen_x%*%t(Phi)
+  return(list("beta_true" = beta_true, "X" = X_mat, "Y" = Y_mat, "CovMat" = C))
 }
 
 

@@ -109,7 +109,21 @@ Tikhonov_Selection_Comp = function(X, Y, RhoSeq, nFold = 10, Select_Method = "CV
   return(list("alpha" = alphaMat, "beta" = btildeMat, "ErrorMat" = ErrorMat, "opt_lambda" = opt_lambda))
 }
 
-Tikhonov_MultiCov = function(X_approx, Y, RhoSeq, Select_Method = "CV", nFold = 10, beta_true = NULL) {
+Tikhonov_Estimate_MultiCov = function(X_approx, Y, opt_lambda){
+  Mont = ncol(X_approx[[1]])
+  betaMat = matrix(0, Mont, ncol(Y))
+  alphaMat = matrix(0, ncol(Y), 1)
+  for (i in 1:ncol(Y)) {
+    YVec = Y[, i, drop = F]
+    Xmat = X_approx[[i]]
+    fit = Tikhonov_Estimate(Xmat, YVec, opt_lambda[i])
+    betaMat[, i] = fit$beta
+    alphaMat[i, ] = fit$alpha
+  }
+  return(list("alpha" = alphaMat, "beta" = betaMat))
+}
+
+Tikhonov_MultiCov = function(X_approx, Y, RhoSeq, Select_Method = "CV", nFold = 10, cvMembership = NULL, beta_true = NULL) {
   Mont = ncol(X_approx[[1]])
   betaMat = matrix(0, Mont, ncol(Y))
   alphaMat = matrix(0, ncol(Y), 1)

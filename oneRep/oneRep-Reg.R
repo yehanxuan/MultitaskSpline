@@ -20,4 +20,11 @@ if (DataType == "Reg"){
     Xmat = simuData$X
     CovMat = simuData$CovMat
     beta_true = simuData$beta_true
+} else if (DataType == "SplineBasis") {
+    nu = 2
+    simuData = Generate_MultiData_Spline(Mont, simu_n, nKnots, M, sigma_e = sigma_e, nu = nu)
+    Ymat = simuData$Y
+    Xmat = simuData$X
+    CovMat = simuData$CovMat
+    beta_true = simuData$beta_true  
 }

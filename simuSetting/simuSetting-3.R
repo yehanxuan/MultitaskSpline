@@ -4,8 +4,9 @@ simu_tmin = 0
 simu_tmax = 1
 simu_order = 4
 nFold = 10
-if (method == "GraphMulti"){
-    lambdaSeq = exp(seq(-9, -2, length.out = 3))
+Select_Method = "CV"
+if (method == "PSpline"){
+    lambdaSeq = exp(seq(-5, 2, length.out = 3))
 } else if (method == "Tikhonov"){
     lambdaSeq = exp(seq(-5,4, length.out = 10)) 
 } else if (method == "FPCA"){
@@ -14,5 +15,5 @@ if (method == "GraphMulti"){
     lambdaSeq = exp(seq(-7, 1, length.out = 7))
 }
 
-etaSeq = exp(seq(-9, -2, length.out = 3))
-hSeq = exp(seq(-9, -2, length.out = 4))
+etaSeq = exp(seq(-5, 2, length.out = 3))
+hSeq = exp(seq(-5, 2, length.out = 4))

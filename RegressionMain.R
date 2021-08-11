@@ -14,7 +14,7 @@ sigma_e = as.numeric(args[7])
 
 settingsID = 1  # Default setting is 1
 simu_n = 128
-method = "RKHS"
+method = "SelectKnots"
 repID = 2
 simu_knots = 20
 DataType = "Reg"
